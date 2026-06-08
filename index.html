@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentHub Admin Prototype</title>
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      darkMode: "class",
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-display: "Space Grotesk", sans-serif;
+      --font-mono: "IBM Plex Mono", monospace;
+    }
+
+    body {
+      font-family: var(--font-display);
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.08), transparent 34%),
+        radial-gradient(circle at 90% 20%, rgba(16, 185, 129, 0.08), transparent 28%),
+        radial-gradient(circle at 80% 95%, rgba(249, 115, 22, 0.08), transparent 30%);
+      background-attachment: fixed;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    .glass {
+      backdrop-filter: blur(8px);
+    }
+
+    .skills-panel {
+      transition: max-height 220ms ease, opacity 220ms ease;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .skills-panel.open {
+      max-height: 300px;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen md:flex">
+    <div id="drawerBackdrop" class="fixed inset-0 z-30 hidden bg-slate-950/50 md:hidden"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white/90 p-4 shadow-xl transition-transform duration-300 md:static md:z-0 md:translate-x-0 dark:border-slate-800 dark:bg-slate-900/90 glass">
+      <div class="mb-6 rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/40">
+        <p class="mono text-xs uppercase tracking-widest text-cyan-700 dark:text-cyan-300">AgentHub Internal</p>
+        <h1 class="mt-2 text-2xl font-semibold leading-tight">Control Panel</h1>
+      </div>
+
+      <nav class="space-y-2" aria-label="Secciones principales">
+        <button class="nav-link w-full rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:hover:bg-slate-800" data-section="dashboard" data-title="Dashboard">Dashboard</button>
+        <button class="nav-link w-full rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:hover:bg-slate-800" data-section="users" data-title="Gestion de usuarios">Gestion de usuarios</button>
+        <button class="nav-link w-full rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:hover:bg-slate-800" data-section="agents" data-title="Gestion de agentes">Gestion de agentes</button>
+        <button class="nav-link w-full rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:hover:bg-slate-800" data-section="skills" data-title="Skills">Skills</button>
+        <button class="nav-link w-full rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:hover:bg-slate-800" data-section="contracts" data-title="Contrataciones de agentes">Contrataciones de agentes</button>
+        <button class="nav-link w-full rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:hover:bg-slate-800" data-section="errors" data-title="Log de errores">Log de errores</button>
+      </nav>
+
+      <div class="mt-auto rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        Prototype HTML + Tailwind + JS vanilla
+      </div>
+    </aside>
+
+    <main class="min-h-screen flex-1">
+      <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 px-4 py-3 md:px-8 dark:border-slate-800 dark:bg-slate-950/80 glass">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <button id="openDrawer" class="rounded-lg border border-slate-300 p-2 md:hidden dark:border-slate-700" aria-label="Abrir menu">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h2 id="sectionTitle" class="text-xl font-semibold">Dashboard</h2>
+          </div>
+
+          <button id="themeToggle" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:border-slate-700 dark:bg-slate-900" aria-label="Cambiar tema">
+            <span id="themeIcon" class="mono text-xs">LIGHT</span>
+            <span class="h-2 w-2 rounded-full bg-cyan-500"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="px-4 py-6 md:px-8">
+        <section id="section-dashboard" class="app-section space-y-6">
+          <div id="metricsGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"></div>
+
+          <article class="rounded-2xl border border-dashed border-slate-300 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Actividad semanal</h3>
+              <span class="mono text-xs text-slate-500 dark:text-slate-400">Placeholder chart</span>
+            </div>
+            <div class="mt-4 grid min-h-[220px] place-content-center rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50">
+              <p class="mono text-xs text-slate-500 dark:text-slate-400">Grafico de actividad semanal (demo)</p>
+            </div>
+          </article>
+        </section>
+
+        <section id="section-users" class="app-section hidden space-y-4">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-left dark:bg-slate-800/50">
+                <tr>
+                  <th class="px-4 py-3">Nombre</th>
+                  <th class="px-4 py-3">Email</th>
+                  <th class="px-4 py-3">Plan</th>
+                  <th class="px-4 py-3">Estado</th>
+                  <th class="px-4 py-3">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usersTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="section-agents" class="app-section hidden space-y-4">
+          <div id="agentsList" class="space-y-4"></div>
+        </section>
+
+        <section id="section-skills" class="app-section hidden space-y-4">
+          <article class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-lg font-semibold">Que es una skill en AgentHub</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Una skill es una capacidad modular reutilizable que define tareas concretas (ejemplo: resumir texto, clasificar tickets o validar datos) para que distintos agentes la ejecuten con comportamiento consistente.</p>
+          </article>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-left dark:bg-slate-800/50">
+                <tr>
+                  <th class="px-4 py-3">Nombre</th>
+                  <th class="px-4 py-3">Descripcion</th>
+                  <th class="px-4 py-3">Agentes que la usan</th>
+                  <th class="px-4 py-3">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="skillsTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="section-contracts" class="app-section hidden space-y-4">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-left dark:bg-slate-800/50">
+                <tr>
+                  <th class="px-4 py-3">Cliente</th>
+                  <th class="px-4 py-3">Agente alquilado</th>
+                  <th class="px-4 py-3">Skills contratadas</th>
+                  <th class="px-4 py-3">Fechas</th>
+                  <th class="px-4 py-3">Importe total</th>
+                  <th class="px-4 py-3">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="contractsTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="section-errors" class="app-section hidden space-y-4">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-left dark:bg-slate-800/50">
+                <tr>
+                  <th class="px-4 py-3">Timestamp</th>
+                  <th class="px-4 py-3">Agente</th>
+                  <th class="px-4 py-3">Tipo</th>
+                  <th class="px-4 py-3">Descripcion</th>
+                  <th class="px-4 py-3">Severidad</th>
+                  <th class="px-4 py-3">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="errorsTbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="modalRoot" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 p-4">
+    <div class="w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+        <h3 id="modalTitle" class="text-lg font-semibold">Detalle</h3>
+        <button id="closeModalBtn" class="rounded-lg border border-slate-300 px-3 py-1 text-sm dark:border-slate-700">Cerrar</button>
+      </div>
+      <div id="modalContent" class="max-h-[70vh] overflow-auto p-5"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="pointer-events-none fixed right-4 top-4 z-[70] translate-y-[-8px] rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm opacity-0 shadow-lg transition dark:border-slate-700 dark:bg-slate-900"></div>
+
+  <script>
+    const persistedTheme = localStorage.getItem("agenthub-theme");
+    const initialTheme = persistedTheme === "dark" || persistedTheme === "light" ? persistedTheme : "light";
+
+    const state = {
+      openDropdownId: null,
+      modalOpen: false,
+      section: "dashboard",
+      theme: initialTheme,
+      metrics: [
+        { id: "income", label: "Ingresos del mes", value: "$42,800", delta: "+12%", tone: "cyan" },
+        { id: "loss", label: "Perdida por descuentos", value: "$4,920", delta: "-4%", tone: "amber" },
+        { id: "active", label: "Agentes activos", value: "18", delta: "+2", tone: "emerald" },
+        { id: "failing", label: "Agentes fallando", value: "3", delta: "-1", tone: "rose" }
+      ],
+      users: [
+        { id: 1, name: "Laura Mendez", email: "laura@novastack.com", plan: "Pro", status: "Activo", since: "2025-11-02" },
+        { id: 2, name: "Hector Ruiz", email: "hector@sentia.ai", plan: "Free", status: "Inactivo", since: "2026-01-14" },
+        { id: 3, name: "Ana Delgado", email: "ana@byteforge.io", plan: "Business", status: "Activo", since: "2025-08-21" },
+        { id: 4, name: "Marco Soto", email: "marco@vectorlab.co", plan: "Pro", status: "Activo", since: "2026-02-09" },
+        { id: 5, name: "Elena Pardo", email: "elena@orionops.com", plan: "Enterprise", status: "Suspendido", since: "2025-12-03" },
+        { id: 6, name: "Jorge Vera", email: "jorge@fluxdata.dev", plan: "Business", status: "Activo", since: "2026-03-18" }
+      ],
+      agents: [
+        { id: 1, name: "Support Pilot", owner: "Laura Mendez", status: "Activo", skills: ["Ticket triage", "Answer drafting", "Sentiment scan"], prompt: "Eres un agente de soporte. Prioriza claridad y tono profesional. Si falta contexto, pide datos concretos." },
+        { id: 2, name: "Lead Scout", owner: "Ana Delgado", status: "Activo", skills: ["Lead enrichment", "Company scoring", "Outreach summary"], prompt: "Eres un agente comercial. Evalua calidad de lead en 3 niveles y justifica con evidencia." },
+        { id: 3, name: "Invoice Guard", owner: "Marco Soto", status: "Fallando", skills: ["Invoice parsing", "Mismatch detection"], prompt: "Valida montos, impuestos y moneda. Marca discrepancias criticas con explicacion corta." },
+        { id: 4, name: "Policy Watch", owner: "Elena Pardo", status: "Inactivo", skills: ["Policy compare", "Clause extraction", "Risk tagger"], prompt: "Analiza documentos legales y destaca cambios de riesgo alto, medio o bajo." },
+        { id: 5, name: "Ops Radar", owner: "Jorge Vera", status: "Activo", skills: ["Latency monitor", "Incident classify", "Runbook suggest", "Root cause hint"], prompt: "Supervisa eventos operativos y sugiere accion inmediata segun severidad." },
+        { id: 6, name: "Content Loom", owner: "Hector Ruiz", status: "Fallando", skills: ["SEO brief", "Outline builder", "Tone adapter"], prompt: "Genera borradores para blog en espanol con tono tecnico y ejemplos accionables." }
+      ],
+      skillsCatalog: [
+        { id: 1, name: "Ticket triage", description: "Clasifica tickets por prioridad", usage: 6, details: "Entrada: ticket crudo. Salida: prioridad, categoria y resumen ejecutivo." },
+        { id: 2, name: "Sentiment scan", description: "Detecta tono emocional en mensajes", usage: 4, details: "Entrada: conversacion. Salida: sentimiento dominante y confianza." },
+        { id: 3, name: "Lead enrichment", description: "Amplia datos de potenciales clientes", usage: 5, details: "Entrada: dominio o nombre de empresa. Salida: metadata comercial." },
+        { id: 4, name: "Invoice parsing", description: "Extrae campos clave de facturas", usage: 3, details: "Entrada: texto o PDF parseado. Salida: importe, impuestos, fecha y proveedor." },
+        { id: 5, name: "Policy compare", description: "Compara versiones de politicas", usage: 2, details: "Entrada: version A y B. Salida: diff semantico y cambios criticos." },
+        { id: 6, name: "Incident classify", description: "Clasifica incidentes por impacto", usage: 4, details: "Entrada: log operativo. Salida: severidad, tipo y equipo recomendado." },
+        { id: 7, name: "SEO brief", description: "Genera brief SEO para articulos", usage: 3, details: "Entrada: keyword y audiencia. Salida: estructura, intencion y tono." },
+        { id: 8, name: "Runbook suggest", description: "Sugiere runbooks de mitigacion", usage: 2, details: "Entrada: incidente detectado. Salida: pasos recomendados y orden de ejecucion." }
+      ],
+      contracts: [
+        { id: 1, client: "NovaStack", agent: "Support Pilot", skills: ["Ticket triage", "Answer drafting"], dates: "2026-01-01 a 2026-12-31", total: 9500, status: "Activo", breakdown: [{ name: "Ticket triage", price: 3800 }, { name: "Answer drafting", price: 5700 }] },
+        { id: 2, client: "VectorLab", agent: "Lead Scout", skills: ["Lead enrichment", "Company scoring"], dates: "2025-09-10 a 2026-09-10", total: 12400, status: "Activo", breakdown: [{ name: "Lead enrichment", price: 6400 }, { name: "Company scoring", price: 6000 }] },
+        { id: 3, client: "FluxData", agent: "Ops Radar", skills: ["Incident classify", "Runbook suggest"], dates: "2025-06-01 a 2026-05-31", total: 11000, status: "Finalizado", breakdown: [{ name: "Incident classify", price: 5200 }, { name: "Runbook suggest", price: 5800 }] },
+        { id: 4, client: "OrionOps", agent: "Policy Watch", skills: ["Policy compare", "Risk tagger"], dates: "2026-02-15 a 2027-02-14", total: 8600, status: "Activo", breakdown: [{ name: "Policy compare", price: 3900 }, { name: "Risk tagger", price: 4700 }] },
+        { id: 5, client: "ByteForge", agent: "Invoice Guard", skills: ["Invoice parsing", "Mismatch detection"], dates: "2025-10-01 a 2026-03-31", total: 7200, status: "Finalizado", breakdown: [{ name: "Invoice parsing", price: 4200 }, { name: "Mismatch detection", price: 3000 }] },
+        { id: 6, client: "Sentia", agent: "Content Loom", skills: ["SEO brief", "Tone adapter"], dates: "2026-04-01 a 2026-12-31", total: 7900, status: "Activo", breakdown: [{ name: "SEO brief", price: 3400 }, { name: "Tone adapter", price: 4500 }] }
+      ],
+      errorLogs: [
+        { id: 1, timestamp: "2026-06-08 09:12", agent: "Invoice Guard", type: "ParserError", description: "No se encontro campo de impuesto.", severity: "critico", stack: "ParserError: tax field missing\n at parseInvoice (invoice.js:88)\n at runSkill (engine.js:201)" },
+        { id: 2, timestamp: "2026-06-08 08:57", agent: "Ops Radar", type: "Timeout", description: "Tiempo maximo excedido en clasificacion.", severity: "warning", stack: "TimeoutError: 8000ms exceeded\n at classifyIncident (ops.js:44)" },
+        { id: 3, timestamp: "2026-06-08 08:20", agent: "Support Pilot", type: "Validation", description: "Payload de ticket incompleto.", severity: "info", stack: "ValidationError: ticket.customerId required\n at validateTicket (schema.js:19)" },
+        { id: 4, timestamp: "2026-06-07 17:49", agent: "Lead Scout", type: "Provider", description: "Proveedor externo devolvio 429.", severity: "warning", stack: "HttpError: 429 too many requests\n at fetchLeadData (provider.js:102)" },
+        { id: 5, timestamp: "2026-06-07 16:02", agent: "Content Loom", type: "Model", description: "Respuesta truncada por limite de tokens.", severity: "info", stack: "ModelError: output truncated\n at composeDraft (content.js:61)" },
+        { id: 6, timestamp: "2026-06-07 15:40", agent: "Policy Watch", type: "Diff", description: "No se pudo comparar clausula 7.", severity: "warning", stack: "DiffError: clause index out of range\n at comparePolicy (policy.js:131)" },
+        { id: 7, timestamp: "2026-06-07 14:58", agent: "Invoice Guard", type: "Rule", description: "Regla de moneda no encontrada.", severity: "critico", stack: "RuleError: currency rule undefined\n at validateCurrency (rules.js:23)" },
+        { id: 8, timestamp: "2026-06-07 13:21", agent: "Ops Radar", type: "Runtime", description: "Error no controlado en sugerencia.", severity: "critico", stack: "TypeError: cannot read properties of undefined\n at suggestRunbook (radar.js:77)" },
+        { id: 9, timestamp: "2026-06-07 12:40", agent: "Lead Scout", type: "Serialization", description: "JSON invalido en proveedor.", severity: "warning", stack: "SyntaxError: Unexpected token } in JSON\n at JSON.parse (<anonymous>)" },
+        { id: 10, timestamp: "2026-06-07 11:04", agent: "Support Pilot", type: "Fallback", description: "Se activo fallback por falta de contexto.", severity: "info", stack: "FallbackNotice: missing intent slots\n at composeResponse (support.js:58)" }
+      ]
+    };
+
+    const sectionTitle = document.getElementById("sectionTitle");
+    const modalRoot = document.getElementById("modalRoot");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalContent = document.getElementById("modalContent");
+    const toast = document.getElementById("toast");
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.remove("opacity-0", "translate-y-[-8px]");
+      toast.classList.add("opacity-100", "translate-y-0");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-[-8px]");
+      }, 1800);
+    }
+
+    function statusBadge(status) {
+      const value = status.toLowerCase();
+      if (value.includes("activo")) return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300";
+      if (value.includes("fall")) return "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300";
+      if (value.includes("inactivo") || value.includes("suspend")) return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+      return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+    }
+
+    function severityBadge(severity) {
+      if (severity === "critico") return "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300";
+      if (severity === "warning") return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+      if (severity === "info") return "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300";
+      if (severity === "resuelto") return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300";
+      return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+    }
+
+    function fmtCurrency(num) {
+      return `$${Number(num).toLocaleString("en-US")}`;
+    }
+
+    function setTheme(nextTheme) {
+      state.theme = nextTheme === "dark" ? "dark" : "light";
+      applyTheme();
+      localStorage.setItem("agenthub-theme", state.theme);
+    }
+
+    function toggleTheme() {
+      setTheme(state.theme === "dark" ? "light" : "dark");
+    }
+
+    function applyTheme() {
+      const root = document.documentElement;
+      const body = document.body;
+      const icon = document.getElementById("themeIcon");
+      const isDark = state.theme === "dark";
+
+      root.classList.toggle("dark", isDark);
+      if (body) body.classList.toggle("dark", isDark);
+      root.setAttribute("data-theme", state.theme);
+      if (icon) icon.textContent = isDark ? "DARK" : "LIGHT";
+    }
+
+    function openModal(title, html) {
+      modalTitle.textContent = title;
+      modalContent.innerHTML = html;
+      modalRoot.classList.remove("hidden");
+      modalRoot.classList.add("flex");
+      state.modalOpen = true;
+      document.body.classList.add("overflow-hidden");
+      closeAllDropdowns();
+    }
+
+    function closeModal() {
+      modalRoot.classList.add("hidden");
+      modalRoot.classList.remove("flex");
+      state.modalOpen = false;
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    function setActiveSection(sectionId, title) {
+      state.section = sectionId;
+      sectionTitle.textContent = title;
+
+      document.querySelectorAll(".app-section").forEach((el) => el.classList.add("hidden"));
+      document.getElementById(`section-${sectionId}`).classList.remove("hidden");
+
+      document.querySelectorAll(".nav-link").forEach((btn) => {
+        const isActive = btn.dataset.section === sectionId;
+        btn.classList.toggle("bg-cyan-100", isActive);
+        btn.classList.toggle("text-cyan-800", isActive);
+        btn.classList.toggle("dark:bg-cyan-900/40", isActive);
+        btn.classList.toggle("dark:text-cyan-200", isActive);
+      });
+
+      closeDrawer();
+      closeAllDropdowns();
+    }
+
+    function dropdownTemplate(id, items) {
+      return `
+        <div class="relative inline-block text-left">
+          <button class="dropdown-toggle rounded-lg border border-slate-300 px-2 py-1 dark:border-slate-700" data-dropdown="${id}" aria-label="Acciones">
+            &#8942;
+          </button>
+          <div id="${id}" class="dropdown-menu invisible absolute right-0 z-30 mt-1 w-44 translate-y-1 rounded-xl border border-slate-200 bg-white p-1 opacity-0 shadow-xl transition dark:border-slate-700 dark:bg-slate-900">
+            ${items.map((item) => `<button class="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800" data-action="${item.action}" data-id="${item.id}">${item.label}</button>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+        menu.classList.add("invisible", "opacity-0", "translate-y-1");
+        menu.classList.remove("visible", "opacity-100", "translate-y-0");
+      });
+      state.openDropdownId = null;
+    }
+
+    function toggleDropdown(menuId) {
+      if (state.openDropdownId === menuId) {
+        closeAllDropdowns();
+        return;
+      }
+      closeAllDropdowns();
+      const menu = document.getElementById(menuId);
+      if (!menu) return;
+      menu.classList.remove("invisible", "opacity-0", "translate-y-1");
+      menu.classList.add("visible", "opacity-100", "translate-y-0");
+      state.openDropdownId = menuId;
+    }
+
+    function renderMetrics() {
+      const tones = {
+        cyan: "border-cyan-200 bg-cyan-50 dark:border-cyan-900 dark:bg-cyan-950/30",
+        amber: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30",
+        emerald: "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30",
+        rose: "border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30"
+      };
+
+      const html = state.metrics.map((metric) => `
+        <article class="rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:shadow-lg ${tones[metric.tone]}">
+          <p class="text-sm text-slate-600 dark:text-slate-300">${metric.label}</p>
+          <p class="mt-3 text-2xl font-semibold">${metric.value}</p>
+          <p class="mono mt-1 text-xs text-slate-500 dark:text-slate-400">${metric.delta}</p>
+        </article>
+      `).join("");
+
+      document.getElementById("metricsGrid").innerHTML = html;
+    }
+
+    function renderUsers() {
+      const html = state.users.map((user) => `
+        <tr class="border-t border-slate-200 dark:border-slate-800">
+          <td class="px-4 py-3 font-medium">${user.name}</td>
+          <td class="px-4 py-3">${user.email}</td>
+          <td class="px-4 py-3">${user.plan}</td>
+          <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs ${statusBadge(user.status)}">${user.status}</span></td>
+          <td class="px-4 py-3">
+            ${dropdownTemplate(`users-dd-${user.id}`, [
+              { action: "user-view", id: user.id, label: "Ver detalle" },
+              { action: "user-delete", id: user.id, label: "Eliminar" }
+            ])}
+          </td>
+        </tr>
+      `).join("");
+      document.getElementById("usersTbody").innerHTML = html;
+    }
+
+    function renderAgents() {
+      const html = state.agents.map((agent) => `
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold">${agent.name}</h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Propietario: ${agent.owner}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="rounded-full px-2 py-1 text-xs ${statusBadge(agent.status)}">${agent.status}</span>
+              ${dropdownTemplate(`agent-dd-${agent.id}`, [
+                { action: "agent-config", id: agent.id, label: "Configurar" },
+                { action: "agent-delete", id: agent.id, label: "Eliminar" }
+              ])}
+            </div>
+          </div>
+          <button class="mt-3 rounded-lg border border-slate-300 px-3 py-1 text-sm dark:border-slate-700" data-action="agent-toggle-skills" data-id="${agent.id}">Ver skills (${agent.skills.length})</button>
+          <div id="agent-skills-${agent.id}" class="skills-panel mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/50">
+            <ul class="list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
+              ${agent.skills.map((skill) => `<li>${skill}</li>`).join("")}
+            </ul>
+          </div>
+        </article>
+      `).join("");
+      document.getElementById("agentsList").innerHTML = html;
+    }
+
+    function renderSkills() {
+      const html = state.skillsCatalog.map((skill) => `
+        <tr class="border-t border-slate-200 dark:border-slate-800">
+          <td class="px-4 py-3 font-medium">${skill.name}</td>
+          <td class="px-4 py-3">${skill.description}</td>
+          <td class="px-4 py-3">${skill.usage}</td>
+          <td class="px-4 py-3">
+            ${dropdownTemplate(`skill-dd-${skill.id}`, [
+              { action: "skill-view", id: skill.id, label: "Ver detalle" },
+              { action: "skill-delete", id: skill.id, label: "Eliminar" }
+            ])}
+          </td>
+        </tr>
+      `).join("");
+      document.getElementById("skillsTbody").innerHTML = html;
+    }
+
+    function renderContracts() {
+      const html = state.contracts.map((contract) => `
+        <tr class="border-t border-slate-200 dark:border-slate-800">
+          <td class="px-4 py-3 font-medium">${contract.client}</td>
+          <td class="px-4 py-3">${contract.agent}</td>
+          <td class="px-4 py-3">${contract.skills.join(", ")}</td>
+          <td class="px-4 py-3">${contract.dates}</td>
+          <td class="px-4 py-3">${fmtCurrency(contract.total)}</td>
+          <td class="px-4 py-3">
+            ${dropdownTemplate(`contract-dd-${contract.id}`, [
+              { action: "contract-view", id: contract.id, label: "Ver detalle" }
+            ])}
+          </td>
+        </tr>
+      `).join("");
+      document.getElementById("contractsTbody").innerHTML = html;
+    }
+
+    function renderErrors() {
+      const html = state.errorLogs.map((error) => `
+        <tr class="border-t border-slate-200 dark:border-slate-800">
+          <td class="px-4 py-3">${error.timestamp}</td>
+          <td class="px-4 py-3 font-medium">${error.agent}</td>
+          <td class="px-4 py-3">${error.type}</td>
+          <td class="px-4 py-3">${error.description}</td>
+          <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs ${severityBadge(error.severity)}">${error.severity}</span></td>
+          <td class="px-4 py-3">
+            ${dropdownTemplate(`error-dd-${error.id}`, [
+              { action: "error-view", id: error.id, label: "Ver detalle" },
+              { action: "error-resolve", id: error.id, label: "Marcar como resuelto" }
+            ])}
+          </td>
+        </tr>
+      `).join("");
+      document.getElementById("errorsTbody").innerHTML = html;
+    }
+
+    function renderAll() {
+      renderMetrics();
+      renderUsers();
+      renderAgents();
+      renderSkills();
+      renderContracts();
+      renderErrors();
+    }
+
+    function openDrawer() {
+      document.getElementById("sidebar").classList.remove("-translate-x-full");
+      document.getElementById("drawerBackdrop").classList.remove("hidden");
+    }
+
+    function closeDrawer() {
+      document.getElementById("sidebar").classList.add("-translate-x-full");
+      document.getElementById("drawerBackdrop").classList.add("hidden");
+    }
+
+    function onAction(action, id) {
+      const user = state.users.find((x) => x.id === Number(id));
+      const agent = state.agents.find((x) => x.id === Number(id));
+      const skill = state.skillsCatalog.find((x) => x.id === Number(id));
+      const contract = state.contracts.find((x) => x.id === Number(id));
+      const error = state.errorLogs.find((x) => x.id === Number(id));
+
+      if (action === "user-view" && user) {
+        openModal("Detalle de usuario", `
+          <div class="space-y-2 text-sm">
+            <p><strong>Nombre:</strong> ${user.name}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Plan:</strong> ${user.plan}</p>
+            <p><strong>Estado:</strong> ${user.status}</p>
+            <p><strong>Fecha de alta:</strong> ${user.since}</p>
+          </div>
+        `);
+      }
+
+      if (action === "user-delete" && user) {
+        state.users = state.users.filter((x) => x.id !== user.id);
+        renderUsers();
+        showToast(`Usuario ${user.name} eliminado (demo)`);
+      }
+
+      if (action === "agent-config" && agent) {
+        openModal("Configuracion de agente", `
+          <div class="space-y-3 text-sm">
+            <p><strong>Agente:</strong> ${agent.name}</p>
+            <p><strong>Propietario:</strong> ${agent.owner}</p>
+            <p><strong>Estado:</strong> ${agent.status}</p>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/50">
+              <p class="mono text-xs">Prompt de sistema</p>
+              <p class="mt-2">${agent.prompt}</p>
+            </div>
+          </div>
+        `);
+      }
+
+      if (action === "agent-delete" && agent) {
+        state.agents = state.agents.filter((x) => x.id !== agent.id);
+        renderAgents();
+        showToast(`Agente ${agent.name} eliminado (demo)`);
+      }
+
+      if (action === "agent-toggle-skills" && agent) {
+        const panel = document.getElementById(`agent-skills-${agent.id}`);
+        panel.classList.toggle("open");
+      }
+
+      if (action === "skill-view" && skill) {
+        openModal("Detalle de skill", `
+          <div class="space-y-3 text-sm">
+            <p><strong>Skill:</strong> ${skill.name}</p>
+            <p><strong>Descripcion corta:</strong> ${skill.description}</p>
+            <p><strong>Uso actual:</strong> ${skill.usage} agentes</p>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/50">
+              <p><strong>Detalle:</strong> ${skill.details}</p>
+            </div>
+          </div>
+        `);
+      }
+
+      if (action === "skill-delete" && skill) {
+        state.skillsCatalog = state.skillsCatalog.filter((x) => x.id !== skill.id);
+        renderSkills();
+        showToast(`Skill ${skill.name} eliminada (demo)`);
+      }
+
+      if (action === "contract-view" && contract) {
+        const lines = contract.breakdown.map((line) => `<li class="flex justify-between gap-3"><span>${line.name}</span><span class="mono">${fmtCurrency(line.price)}</span></li>`).join("");
+        openModal("Detalle de contratacion", `
+          <div class="space-y-3 text-sm">
+            <p><strong>Cliente:</strong> ${contract.client}</p>
+            <p><strong>Agente:</strong> ${contract.agent}</p>
+            <p><strong>Periodo:</strong> ${contract.dates}</p>
+            <p><strong>Estado:</strong> ${contract.status}</p>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/50">
+              <p class="mb-2 font-medium">Skills contratadas</p>
+              <ul class="space-y-1">${lines}</ul>
+            </div>
+            <p class="text-base font-semibold">Total final: ${fmtCurrency(contract.total)}</p>
+          </div>
+        `);
+      }
+
+      if (action === "error-view" && error) {
+        openModal("Detalle de error", `
+          <div class="space-y-3 text-sm">
+            <p><strong>Timestamp:</strong> ${error.timestamp}</p>
+            <p><strong>Agente:</strong> ${error.agent}</p>
+            <p><strong>Tipo:</strong> ${error.type}</p>
+            <p><strong>Descripcion:</strong> ${error.description}</p>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/50">
+              <p class="mono text-xs">Stack trace</p>
+              <pre class="mono mt-2 whitespace-pre-wrap text-xs">${error.stack}</pre>
+            </div>
+          </div>
+        `);
+      }
+
+      if (action === "error-resolve" && error) {
+        error.severity = "resuelto";
+        renderErrors();
+        showToast(`Error ${error.id} marcado como resuelto`);
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById("themeToggle").addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleTheme();
+      });
+      document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+      document.getElementById("openDrawer").addEventListener("click", openDrawer);
+      document.getElementById("drawerBackdrop").addEventListener("click", closeDrawer);
+
+      document.querySelectorAll(".nav-link").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          setActiveSection(btn.dataset.section, btn.dataset.title);
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        const dropdownButton = event.target.closest(".dropdown-toggle");
+        const actionButton = event.target.closest("[data-action]");
+
+        if (dropdownButton) {
+          event.stopPropagation();
+          toggleDropdown(dropdownButton.dataset.dropdown);
+          return;
+        }
+
+        if (actionButton) {
+          const action = actionButton.dataset.action;
+          const id = actionButton.dataset.id;
+          closeAllDropdowns();
+          onAction(action, id);
+          return;
+        }
+
+        if (!event.target.closest(".dropdown-menu")) {
+          closeAllDropdowns();
+        }
+      });
+
+      modalRoot.addEventListener("click", (event) => {
+        if (event.target === modalRoot) {
+          closeModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          if (state.modalOpen) closeModal();
+          closeAllDropdowns();
+          closeDrawer();
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth >= 768) {
+          document.getElementById("drawerBackdrop").classList.add("hidden");
+          document.getElementById("sidebar").classList.remove("-translate-x-full");
+        } else {
+          document.getElementById("sidebar").classList.add("-translate-x-full");
+        }
+      });
+    }
+
+    function init() {
+      setTheme(state.theme);
+      bindEvents();
+      renderAll();
+      setActiveSection("dashboard", "Dashboard");
+    }
+
+    init();
+  </script>
+</body>
+</html>
