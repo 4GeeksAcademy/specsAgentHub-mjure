@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AgentHub Admin Prototype</title>
-  <script>
-    window.tailwind = window.tailwind || {};
-    window.tailwind.config = {
-      darkMode: "class",
-    };
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,6 +195,12 @@
   <div id="toast" class="pointer-events-none fixed right-4 top-4 z-[70] translate-y-[-8px] rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm opacity-0 shadow-lg transition dark:border-slate-700 dark:bg-slate-900"></div>
 
   <script>
+
+     window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      darkMode: "class",
+    };
+    
     const persistedTheme = localStorage.getItem("agenthub-theme");
     const initialTheme = persistedTheme === "dark" || persistedTheme === "light" ? persistedTheme : "light";
 
